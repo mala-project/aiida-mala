@@ -10,10 +10,10 @@ from aiida.orm import SinglefileData
 from aiida.parsers.parser import Parser
 from aiida.plugins import CalculationFactory
 
-DiffCalculation = CalculationFactory("mala")
+PreprocessDataCalculation = CalculationFactory("mala.preprocess_data")
 
 
-class DiffParser(Parser):
+class PreprocessDataParser(Parser):
     """
     Parser class for parsing output of calculation.
     """
@@ -22,14 +22,14 @@ class DiffParser(Parser):
         """
         Initialize Parser instance
 
-        Checks that the ProcessNode being passed was produced by a DiffCalculation.
+        Checks that the ProcessNode being passed was produced by a PreprocessDataCalculation.
 
         :param node: ProcessNode of calculation
         :param type node: :class:`aiida.orm.nodes.process.process.ProcessNode`
         """
         super().__init__(node)
-        if not issubclass(node.process_class, DiffCalculation):
-            raise exceptions.ParsingError("Can only parse DiffCalculation")
+        if not issubclass(node.process_class, PreprocessDataCalculation):
+            raise exceptions.ParsingError("Can only parse PreprocessDataCalculation")
 
     def parse(self, **kwargs):
         """

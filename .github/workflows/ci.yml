@@ -55,6 +55,10 @@ jobs:
   docs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    strategy:
+      matrix:
+        python-version: ['3.12']
+        aiida-version: ['stable']
     steps:
     - uses: actions/checkout@v4
     - name: Set up Python ${{ matrix.python-version }}
@@ -71,6 +75,10 @@ jobs:
   static-analysis:
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    strategy:
+      matrix:
+        python-version: ['3.12']
+        aiida-version: ['stable']
     steps:
     - uses: actions/checkout@v4
     - name: Set up Python ${{ matrix.python-version }}

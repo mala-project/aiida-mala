@@ -5,14 +5,14 @@ Register calculations via the "aiida.calculations" entry point in setup.json.
 """
 
 from aiida.common import datastructures
-from aiida.engine import CalcJob
+from aiida.engine import CalcJob, CalcJobProcessSpec
 from aiida.orm import SinglefileData
 from aiida.plugins import DataFactory
 
-DiffParameters = DataFactory("mala")
+PreprocessDataParameters = DataFactory("mala")
 
 
-class DiffCalculation(CalcJob):
+class PreprocessDataCalculation(CalcJob):
     """
     AiiDA calculation plugin wrapping the diff executable.
 
@@ -20,7 +20,7 @@ class DiffCalculation(CalcJob):
     """
 
     @classmethod
-    def define(cls, spec):
+    def define(cls, spec: CalcJobProcessSpec):
         """Define inputs and outputs of the calculation."""
         super().define(spec)
 
@@ -29,21 +29,21 @@ class DiffCalculation(CalcJob):
             "num_machines": 1,
             "num_mpiprocs_per_machine": 1,
         }
-        spec.inputs["metadata"]["options"]["parser_name"].default = "mala"
+        # spec.inputs["metadata"]["options"]["parser_name"].default = "mala"
 
         # new ports
-        spec.input("metadata.options.output_filename", valid_type=str, default="patch.diff")
-        spec.input(
-            "parameters",
-            valid_type=DiffParameters,
-            help="Command line parameters for diff",
-        )
-        spec.input("file1", valid_type=SinglefileData, help="First file to be compared.")
-        spec.input("file2", valid_type=SinglefileData, help="Second file to be compared.")
+        spec.input("metadata.options.output_filename", valid_type=str, default="snapshot.in")
+        # spec.input(
+        #     "parameters",
+        #     valid_type=PreprocessDataParameters,
+        #     help="Command line parameters for diff",
+        # )
+        spec.input("ldos_file", valid_type=SinglefileData, help="LDOS cube file.")
+        # spec.input("file2", valid_type=SinglefileData, help="Second file to be compared.")
         spec.output(
-            "mala",
+            "mala.preprocess_data",
             valid_type=SinglefileData,
-            help="diff between file1 and file2.",
+            help="Preprocessed snapshot file.",
         )
 
         spec.exit_code(
@@ -72,14 +72,9 @@ class DiffCalculation(CalcJob):
         calcinfo.codes_info = [codeinfo]
         calcinfo.local_copy_list = [
             (
-                self.inputs.file1.uuid,
-                self.inputs.file1.filename,
-                self.inputs.file1.filename,
-            ),
-            (
-                self.inputs.file2.uuid,
-                self.inputs.file2.filename,
-                self.inputs.file2.filename,
+                self.inputs.ldos_file.uuid,
+                self.inputs.ldos_file.filename,
+                self.inputs.ldos_file.filename,
             ),
         ]
         calcinfo.retrieve_list = [self.metadata.options.output_filename]

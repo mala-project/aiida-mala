@@ -44,10 +44,10 @@ Source = "https://github.com/pcagas/aiida-mala"
 "mala" = "aiida_mala.data:DiffParameters"
 
 [project.entry-points."aiida.calculations"]
-"mala" = "aiida_mala.calculations:DiffCalculation"
+"mala.preprocess_data" = "aiida_mala.calculations.calculations:PreprocessDataCalculation"
 
 [project.entry-points."aiida.parsers"]
-"mala" = "aiida_mala.parsers:DiffParser"
+"mala.preprocess_data" = "aiida_mala.parsers:PreprocessDataParser"
 
 [project.entry-points."aiida.cmdline.data"]
 "mala" = "aiida_mala.cli:data_cli"
