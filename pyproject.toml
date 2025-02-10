@@ -44,7 +44,7 @@ Source = "https://github.com/pcagas/aiida-mala"
 "mala" = "aiida_mala.data:DiffParameters"
 
 [project.entry-points."aiida.calculations"]
-"mala.preprocess_data" = "aiida_mala.calculations.calculations:PreprocessDataCalculation"
+"mala.preprocess_data" = "aiida_mala.calculations.preprocess_data:PreprocessDataCalculation"
 
 [project.entry-points."aiida.parsers"]
 "mala.preprocess_data" = "aiida_mala.parsers:PreprocessDataParser"

@@ -38,13 +38,13 @@ class PreprocessDataCalculation(CalcJob):
         #     valid_type=PreprocessDataParameters,
         #     help="Command line parameters for diff",
         # )
-        spec.input("ldos_file", valid_type=SinglefileData, help="LDOS cube file.")
-        # spec.input("file2", valid_type=SinglefileData, help="Second file to be compared.")
-        spec.output(
-            "mala.preprocess_data",
-            valid_type=SinglefileData,
-            help="Preprocessed snapshot file.",
-        )
+        # spec.input("ldos_file", valid_type=SinglefileData, help="LDOS cube file.")
+        spec.input("input_file", valid_type=SinglefileData, help="MALA script file")
+        # spec.output(
+        #    "mala.preprocess_data",
+        #    valid_type=SinglefileData,
+        #    help="Preprocessed snapshot file.",
+        # )
 
         spec.exit_code(
             300,
@@ -61,9 +61,9 @@ class PreprocessDataCalculation(CalcJob):
         :return: `aiida.common.datastructures.CalcInfo` instance
         """
         codeinfo = datastructures.CodeInfo()
-        codeinfo.cmdline_params = self.inputs.parameters.cmdline_params(
-            file1_name=self.inputs.file1.filename, file2_name=self.inputs.file2.filename
-        )
+        # codeinfo.cmdline_params = self.inputs.parameters.cmdline_params(
+        #    file1_name=self.inputs.input_file.filename
+        # )
         codeinfo.code_uuid = self.inputs.code.uuid
         codeinfo.stdout_name = self.metadata.options.output_filename
 
@@ -72,9 +72,9 @@ class PreprocessDataCalculation(CalcJob):
         calcinfo.codes_info = [codeinfo]
         calcinfo.local_copy_list = [
             (
-                self.inputs.ldos_file.uuid,
-                self.inputs.ldos_file.filename,
-                self.inputs.ldos_file.filename,
+                self.inputs.input_file.uuid,
+                self.inputs.input_file.filename,
+                self.inputs.input_file.filename,
             ),
         ]
         calcinfo.retrieve_list = [self.metadata.options.output_filename]
