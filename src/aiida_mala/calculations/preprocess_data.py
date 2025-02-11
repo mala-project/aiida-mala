@@ -9,7 +9,7 @@ from aiida.engine import CalcJob, CalcJobProcessSpec
 from aiida.orm import SinglefileData
 from aiida.plugins import DataFactory
 
-PreprocessDataParameters = DataFactory("mala")
+PreprocessDataParameters = DataFactory("mala.preprocess_data")
 
 
 class PreprocessDataCalculation(CalcJob):
@@ -36,7 +36,7 @@ class PreprocessDataCalculation(CalcJob):
         # spec.input(
         #     "parameters",
         #     valid_type=PreprocessDataParameters,
-        #     help="Command line parameters for diff",
+        #     help="Command line parameters for preprocessing data",
         # )
         # spec.input("ldos_file", valid_type=SinglefileData, help="LDOS cube file.")
         spec.input("input_file", valid_type=SinglefileData, help="MALA script file")
@@ -62,8 +62,10 @@ class PreprocessDataCalculation(CalcJob):
         """
         codeinfo = datastructures.CodeInfo()
         # codeinfo.cmdline_params = self.inputs.parameters.cmdline_params(
-        #    file1_name=self.inputs.input_file.filename
+        #     input_file=self.inputs.input_file.filename
         # )
+        codeinfo.cmdline_params = [self.inputs.input_file.filename]
+
         codeinfo.code_uuid = self.inputs.code.uuid
         codeinfo.stdout_name = self.metadata.options.output_filename
 

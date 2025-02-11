@@ -41,7 +41,7 @@ docs = [
 Source = "https://github.com/pcagas/aiida-mala"
 
 [project.entry-points."aiida.data"]
-"mala" = "aiida_mala.data:DiffParameters"
+"mala.preprocess_data" = "aiida_mala.data:PreprocessDataParameters"
 
 [project.entry-points."aiida.calculations"]
 "mala.preprocess_data" = "aiida_mala.calculations.preprocess_data:PreprocessDataCalculation"

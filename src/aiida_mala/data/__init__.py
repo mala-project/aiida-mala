@@ -18,7 +18,7 @@ cmdline_options = {
 }
 
 
-class DiffParameters(Dict):  # pylint: disable=too-many-ancestors
+class PreprocessDataParameters(Dict):  # pylint: disable=too-many-ancestors
     """
     Command line options for diff.
 
@@ -48,23 +48,21 @@ class DiffParameters(Dict):  # pylint: disable=too-many-ancestors
 
         Uses the voluptuous package for validation. Find out about allowed keys using::
 
-            print(DiffParameters).schema.schema
+            print(PreprocessDataParameters).schema.schema
 
         :param parameters_dict: dictionary with commandline parameters
         :param type parameters_dict: dict
         :returns: validated dictionary
         """
-        return DiffParameters.schema(parameters_dict)
+        return PreprocessDataParameters.schema(parameters_dict)
 
-    def cmdline_params(self, file1_name, file2_name):
+    def cmdline_params(self, input_file):
         """Synthesize command line parameters.
 
-        e.g. [ '--ignore-case', 'filename1', 'filename2']
+        e.g. [ '--ignore-case', 'inputfile']
 
-        :param file_name1: Name of first file
-        :param type file_name1: str
-        :param file_name2: Name of second file
-        :param type file_name2: str
+        :param input_file: Name of first file
+        :param type input_file: str
 
         """
         parameters = []
@@ -74,7 +72,7 @@ class DiffParameters(Dict):  # pylint: disable=too-many-ancestors
             if enabled:
                 parameters += ["--" + option]
 
-        parameters += [file1_name, file2_name]
+        parameters += [input_file]
 
         return [str(p) for p in parameters]
 
