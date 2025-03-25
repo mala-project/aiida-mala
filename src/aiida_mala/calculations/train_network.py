@@ -9,14 +9,12 @@ from aiida.common import datastructures
 from aiida.engine import CalcJob, CalcJobProcessSpec
 from aiida.plugins import DataFactory
 
-PreprocessDataParameters = DataFactory("mala.preprocess_data")
+TrainNetworkParameters = DataFactory("mala.train_network")
 
 
-class PreprocessDataCalculation(CalcJob):
+class TrainNetworkCalculation(CalcJob):
     """
-    AiiDA calculation plugin wrapping the diff executable.
-
-    Simple AiiDA plugin wrapper for 'diffing' two files.
+    AiiDA calculation plugin wrapping training of the data.
     """
 
     _DEFAULT_INPUT_FILE = "aiida.in"
@@ -27,26 +25,25 @@ class PreprocessDataCalculation(CalcJob):
         super().define(spec)
 
         spec.input("metadata.options.input_filename", valid_type=str, default=cls._DEFAULT_INPUT_FILE)
+
         spec.input(
             "parameters",
             valid_type=orm.Dict,
             help="The input parameters that are to be used to construct the input file.",
         )
-        spec.input("ldos", valid_type=orm.FolderData, help="Specify the folder with LDOS cube files")
+
+        spec.input("input_data", valid_type=orm.FolderData, help="Specify the folder with input data.")
+        spec.input("output_data", valid_type=orm.FolderData, help="Specify the folder with output data.")
+        spec.input("tr_snapshots", valid_type=orm.List, help="List of training snapshots.")
+        spec.input("va_snapshots", valid_type=orm.List, help="List of validation snapshots.")
+
         # set default values for AiiDA options
         spec.inputs["metadata"]["options"]["resources"].default = {
             "num_machines": 1,
             "num_mpiprocs_per_machine": 1,
         }
-        # spec.inputs["metadata"]["options"]["parser_name"].default = "mala"
 
-        # new ports
-
-        # spec.input(
-        #     "parameters",
-        #     valid_type=PreprocessDataParameters,
-        #     help="Command line parameters for preprocessing data",
-        # )
+        spec.output("model", valid_type=orm.SinglefileData, help="The trained model file.")
 
         spec.exit_code(
             300,
@@ -65,12 +62,12 @@ class PreprocessDataCalculation(CalcJob):
 
         arguments = [
             self.inputs.parameters,
+            self.inputs.tr_snapshots,
+            self.inputs.va_snapshots,
         ]
         local_copy_list = []
 
-        input_file_content, local_copy_pseudo_list = self._generate_input(*arguments)
-        local_copy_list += local_copy_pseudo_list
-
+        input_file_content = self._generate_input(*arguments)
         with folder.open(self.metadata.options.input_filename, "w") as handle:
             handle.write(input_file_content)
 
@@ -81,23 +78,25 @@ class PreprocessDataCalculation(CalcJob):
         codeinfo.cmdline_params = [self.metadata.options.input_filename]
 
         codeinfo.code_uuid = self.inputs.code.uuid
-        # codeinfo.stdout_name = self.metadata.options.output_filename
+
+        local_copy_list = []
+        for snapshot in self.inputs.tr_snapshots.get_list():
+            local_copy_list.append((self.inputs.input_data.uuid, f"{snapshot}.in.npy", f"{snapshot}.in.npy"))
+            local_copy_list.append((self.inputs.output_data.uuid, f"{snapshot}.out.npy", f"{snapshot}.out.npy"))
+        for snapshot in self.inputs.va_snapshots.get_list():
+            local_copy_list.append((self.inputs.input_data.uuid, f"{snapshot}.in.npy", f"{snapshot}.in.npy"))
+            local_copy_list.append((self.inputs.output_data.uuid, f"{snapshot}.out.npy", f"{snapshot}.out.npy"))
 
         # Prepare a `CalcInfo` to be returned to the engine
         calcinfo = datastructures.CalcInfo()
         calcinfo.codes_info = [codeinfo]
         calcinfo.local_copy_list = local_copy_list
-        calcinfo.retrieve_list = [
-            self.metadata.options.output_filename,
-            "Be_snapshot0.in.npy",
-            "Be_snapshot0.out.npy",
-            "Be_snapshot0.info.json",
-        ]
+        calcinfo.retrieve_list = ["Be_model.zip"]
 
         return calcinfo
 
     @classmethod
-    def _generate_input(cls, parameters: orm.Dict):  # pylint: disable=invalid-name
+    def _generate_input(cls, parameters: orm.Dict, tr_snapshots, va_snapshots):  # pylint: disable=invalid-name
         """Create the input file"""
 
         par_dict = parameters.get_dict()
@@ -105,7 +104,6 @@ class PreprocessDataCalculation(CalcJob):
         input_file = ""
         input_file += "import os\n"
         input_file += "import mala\n"
-        input_file += "from mala.datahandling.data_repo import data_path\n"
 
         input_file += "parameters = mala.Parameters()\n"
         for group in par_dict:
@@ -115,26 +113,26 @@ class PreprocessDataCalculation(CalcJob):
                 else:
                     input_file += f"parameters.{group:s}.{key:s} = {value}\n"
 
-        input_file += "data_converter = mala.DataConverter(parameters)\n"
-        input_file += 'outfile = os.path.join(data_path, "Be_snapshot0.out")\n'
-        input_file += 'ldosfile = os.path.join(data_path, "cubes/tmp.pp*Be_ldos.cube")\n'
+        input_file += "data_handler = mala.DataHandler(parameters)\n"
 
-        input_file += "data_converter.add_snapshot(\n"
-        input_file += '    descriptor_input_type="espresso-out",\n'
-        input_file += "    descriptor_input_path=outfile,\n"
-        input_file += '    target_input_type=".cube",\n'
-        input_file += "    target_input_path=ldosfile,\n"
-        input_file += '    simulation_output_type="espresso-out",\n'
-        input_file += "    simulation_output_path=outfile,\n"
-        input_file += '    target_units="1/(Ry*Bohr^3)",\n'
-        input_file += ")\n"
+        for snapshot in tr_snapshots.get_list():
+            input_file += f"data_handler.add_snapshot('{snapshot:s}.in.npy', '.', '{snapshot:s}.out.npy', '.', 'tr')\n"
+        for snapshot in va_snapshots.get_list():
+            input_file += f"data_handler.add_snapshot('{snapshot:s}.in.npy', '.', '{snapshot:s}.out.npy', '.', 'va')\n"
 
-        input_file += "data_converter.convert_snapshots(\n"
-        input_file += '    target_save_path="./",\n'
-        input_file += '    simulation_output_save_path="./",\n'
-        input_file += '    descriptor_save_path="./",\n'
-        input_file += '    naming_scheme="Be_snapshot*.npy",\n'
-        input_file += '    descriptor_calculation_kwargs={"working_directory": data_path},\n'
-        input_file += ")\n"
+        input_file += "data_handler.prepare_data()\n"
 
-        return input_file, []
+        input_file += "parameters.network.layer_sizes = [\n"
+        input_file += "    data_handler.input_dimension,\n"
+        input_file += "    100,\n"
+        input_file += "    data_handler.output_dimension,\n"
+        input_file += "]\n"
+        input_file += "test_network = mala.Network(parameters)\n"
+
+        input_file += "test_trainer = mala.Trainer(parameters, test_network, data_handler)\n"
+        input_file += "test_trainer.train_network()\n"
+        # input_file += f"additional_calculation_data = os.path.join(data_path, \"Be_snapshot0.out\")\n"
+        input_file += "test_trainer.save_run('Be_model')\n"
+        # input_file += f"    \"Be_model\", additional_calculation_data=additional_calculation_data\n"
+
+        return input_file

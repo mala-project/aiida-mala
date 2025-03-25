@@ -42,9 +42,11 @@ Source = "https://github.com/pcagas/aiida-mala"
 
 [project.entry-points."aiida.data"]
 "mala.preprocess_data" = "aiida_mala.data:PreprocessDataParameters"
+"mala.train_network" = "aiida_mala.data:TrainNetworkParameters"
 
 [project.entry-points."aiida.calculations"]
 "mala.preprocess_data" = "aiida_mala.calculations.preprocess_data:PreprocessDataCalculation"
+"mala.train_network" = "aiida_mala.calculations.train_network:TrainNetworkCalculation"
 
 [project.entry-points."aiida.parsers"]
 "mala.preprocess_data" = "aiida_mala.parsers:PreprocessDataParser"
