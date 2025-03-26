@@ -42,6 +42,7 @@ class TrainNetworkCalculation(CalcJob):
             "num_machines": 1,
             "num_mpiprocs_per_machine": 1,
         }
+        spec.inputs["metadata"]["options"]["parser_name"].default = "mala.train_network"
 
         spec.output("model", valid_type=orm.SinglefileData, help="The trained model file.")
 
@@ -67,7 +68,7 @@ class TrainNetworkCalculation(CalcJob):
         ]
         local_copy_list = []
 
-        input_file_content = self._generate_input(*arguments)
+        input_file_content = self._generate_input_file(*arguments)
         with folder.open(self.metadata.options.input_filename, "w") as handle:
             handle.write(input_file_content)
 
@@ -96,7 +97,7 @@ class TrainNetworkCalculation(CalcJob):
         return calcinfo
 
     @classmethod
-    def _generate_input(cls, parameters: orm.Dict, tr_snapshots, va_snapshots):  # pylint: disable=invalid-name
+    def _generate_input_file(cls, parameters: orm.Dict, tr_snapshots, va_snapshots):  # pylint: disable=invalid-name
         """Create the input file"""
 
         par_dict = parameters.get_dict()
@@ -122,11 +123,9 @@ class TrainNetworkCalculation(CalcJob):
 
         input_file += "data_handler.prepare_data()\n"
 
-        input_file += "parameters.network.layer_sizes = [\n"
-        input_file += "    data_handler.input_dimension,\n"
-        input_file += "    100,\n"
-        input_file += "    data_handler.output_dimension,\n"
-        input_file += "]\n"
+        input_file += (
+            "parameters.network.layer_sizes = [data_handler.input_dimension, 100, data_handler.output_dimension]\n"
+        )
         input_file += "test_network = mala.Network(parameters)\n"
 
         input_file += "test_trainer = mala.Trainer(parameters, test_network, data_handler)\n"
