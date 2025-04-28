@@ -13,7 +13,7 @@ from aiida.plugins import CalculationFactory
 TrainNetworkCalculation = CalculationFactory("mala.train_network")
 
 
-class PreprocessDataParser(Parser):
+class TrainNetworkParser(Parser):
     """
     Parser class for parsing output of calculation.
     """
@@ -51,6 +51,6 @@ class PreprocessDataParser(Parser):
         self.logger.info(f"Parsing '{'Be_model.zip'}'")
         with self.retrieved.open("Be_model.zip", "rb") as handle:
             output_node = SinglefileData(file=handle)
-        self.out("mala.train_network", output_node)
+        self.out("model", output_node)
 
         return ExitCode(0)

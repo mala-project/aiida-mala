@@ -47,6 +47,7 @@ Source = "https://github.com/pcagas/aiida-mala"
 [project.entry-points."aiida.calculations"]
 "mala.preprocess_data" = "aiida_mala.calculations.preprocess_data:PreprocessDataCalculation"
 "mala.train_network" = "aiida_mala.calculations.train_network:TrainNetworkCalculation"
+"mala.test_network" = "aiida_mala.calculations.test_network:TestNetworkCalculation"
 
 [project.entry-points."aiida.parsers"]
 "mala.train_network" = "aiida_mala.parsers.train_network:TrainNetworkParser"
