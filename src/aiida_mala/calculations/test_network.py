@@ -29,15 +29,17 @@ class TestNetworkCalculation(CalcJob):
         spec.input("input_data", valid_type=orm.FolderData, help="Specify the folder with input data.")
         spec.input("output_data", valid_type=orm.FolderData, help="Specify the folder with output data.")
         spec.input("te_snapshots", valid_type=orm.List, help="List of testing snapshots.")
+        spec.input("observables", valid_type=orm.List, help="List of observables to test.")
 
         # set default values for AiiDA options
         spec.inputs["metadata"]["options"]["resources"].default = {
             "num_machines": 1,
             "num_mpiprocs_per_machine": 1,
         }
-        # spec.inputs["metadata"]["options"]["parser_name"].default = "mala.train_network"
 
-        # spec.output("model", valid_type=orm.SinglefileData, help="The trained model file.")
+        spec.inputs["metadata"]["options"]["parser_name"].default = "mala.test_network"
+
+        spec.output("observables", valid_type=orm.Dict, help="Dictionary of the observables.")
 
         spec.exit_code(
             300,
@@ -56,6 +58,8 @@ class TestNetworkCalculation(CalcJob):
 
         arguments = [
             self.inputs.te_snapshots,
+            self.inputs.observables.get_list(),
+            self.inputs.model.filename,
         ]
         local_copy_list = []
 
@@ -82,26 +86,26 @@ class TestNetworkCalculation(CalcJob):
         calcinfo = datastructures.CalcInfo()
         calcinfo.codes_info = [codeinfo]
         calcinfo.local_copy_list = local_copy_list
-        # calcinfo.retrieve_list = ["Be_model.zip"]
+        calcinfo.retrieve_list = ["observables.json"]
 
         return calcinfo
 
     @classmethod
-    def _generate_input_file(cls, te_snapshots):  # pylint: disable=invalid-name
+    def _generate_input_file(cls, te_snapshots, observables, model):  # pylint: disable=invalid-name
         """Create the input file"""
 
         input_file = ""
         input_file += "import os\n"
         input_file += "import mala\n"
-        input_file += "from mala import printout\n"
+        input_file += "import json\n"
 
-        model_name = "Be_model"
+        model_name = model.rsplit(".")[0]
         model_path = "./"
         input_file += (
             "parameters, network, data_handler, tester ="
             f" mala.Tester.load_run(run_name='{model_name:s}', path='{model_path:s}')\n"
         )
-        input_file += "tester.observables_to_test = ['band_energy', 'density']\n"
+        input_file += f"tester.observables_to_test = {observables}\n"
         input_file += "tester.output_format = 'list'\n"
         input_file += "parameters.data.use_lazy_loading = True\n"
 
@@ -115,5 +119,7 @@ class TestNetworkCalculation(CalcJob):
         input_file += "data_handler.prepare_data(reparametrize_scaler=False)\n"
 
         input_file += "results = tester.test_all_snapshots()\n"
+        input_file += "with open('observables.json', 'w') as file:\n"
+        input_file += "  file.write(json.dumps(results))\n"
 
         return input_file
