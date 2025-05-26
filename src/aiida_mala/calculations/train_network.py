@@ -28,7 +28,7 @@ class TrainNetworkCalculation(CalcJob):
 
         spec.input(
             "parameters",
-            valid_type=orm.Dict,
+            valid_type=TrainNetworkParameters,
             help="The input parameters that are to be used to construct the input file.",
         )
 
@@ -38,11 +38,11 @@ class TrainNetworkCalculation(CalcJob):
         spec.input("va_snapshots", valid_type=orm.List, help="List of validation snapshots.")
 
         # set default values for AiiDA options
-        spec.inputs["metadata"]["options"]["resources"].default = {
+        spec.inputs["metadata"]["options"]["resources"].default = {  # type: ignore
             "num_machines": 1,
             "num_mpiprocs_per_machine": 1,
         }
-        spec.inputs["metadata"]["options"]["parser_name"].default = "mala.train_network"
+        spec.inputs["metadata"]["options"]["parser_name"].default = "mala.train_network"  # type:ignore
 
         spec.output("model", valid_type=orm.SinglefileData, help="The trained model file.")
 
@@ -62,31 +62,52 @@ class TrainNetworkCalculation(CalcJob):
         """
 
         arguments = [
-            self.inputs.parameters,
-            self.inputs.tr_snapshots,
-            self.inputs.va_snapshots,
+            self.inputs.parameters,  # type:ignore
+            self.inputs.tr_snapshots,  # type:ignore
+            self.inputs.va_snapshots,  # type:ignore
         ]
         local_copy_list = []
 
         input_file_content = self._generate_input_file(*arguments)
-        with folder.open(self.metadata.options.input_filename, "w") as handle:
+        with folder.open(self.metadata.options.input_filename, "w") as handle:  # type:ignore
             handle.write(input_file_content)
 
         codeinfo = datastructures.CodeInfo()
-        # codeinfo.cmdline_params = self.inputs.parameters.cmdline_params(
-        #     input_file=self.inputs.input_file.filename
-        # )
-        codeinfo.cmdline_params = [self.metadata.options.input_filename]
+        codeinfo.cmdline_params = [self.metadata.options.input_filename]  # type:ignore
 
-        codeinfo.code_uuid = self.inputs.code.uuid
+        codeinfo.code_uuid = self.inputs.code.uuid  # type:ignore
 
         local_copy_list = []
-        for snapshot in self.inputs.tr_snapshots.get_list():
-            local_copy_list.append((self.inputs.input_data.uuid, f"{snapshot}.in.npy", f"{snapshot}.in.npy"))
-            local_copy_list.append((self.inputs.output_data.uuid, f"{snapshot}.out.npy", f"{snapshot}.out.npy"))
-        for snapshot in self.inputs.va_snapshots.get_list():
-            local_copy_list.append((self.inputs.input_data.uuid, f"{snapshot}.in.npy", f"{snapshot}.in.npy"))
-            local_copy_list.append((self.inputs.output_data.uuid, f"{snapshot}.out.npy", f"{snapshot}.out.npy"))
+        for snapshot in self.inputs.tr_snapshots.get_list():  # type:ignore
+            local_copy_list.append(
+                (
+                    self.inputs.input_data.uuid,  # type:ignore
+                    f"{snapshot}.in.npy",
+                    f"{snapshot}.in.npy",
+                )
+            )
+            local_copy_list.append(
+                (
+                    self.inputs.output_data.uuid,  # type:ignore
+                    f"{snapshot}.out.npy",
+                    f"{snapshot}.out.npy",
+                )
+            )
+        for snapshot in self.inputs.va_snapshots.get_list():  # type:ignore
+            local_copy_list.append(
+                (
+                    self.inputs.input_data.uuid,  # type:ignore
+                    f"{snapshot}.in.npy",
+                    f"{snapshot}.in.npy",
+                )
+            )
+            local_copy_list.append(
+                (
+                    self.inputs.output_data.uuid,  # type:ignore
+                    f"{snapshot}.out.npy",
+                    f"{snapshot}.out.npy",
+                )
+            )
 
         # Prepare a `CalcInfo` to be returned to the engine
         calcinfo = datastructures.CalcInfo()
@@ -130,8 +151,6 @@ class TrainNetworkCalculation(CalcJob):
 
         input_file += "test_trainer = mala.Trainer(parameters, test_network, data_handler)\n"
         input_file += "test_trainer.train_network()\n"
-        # input_file += f"additional_calculation_data = os.path.join(data_path, \"Be_snapshot0.out\")\n"
         input_file += "test_trainer.save_run('Be_model')\n"
-        # input_file += f"    \"Be_model\", additional_calculation_data=additional_calculation_data\n"
 
         return input_file

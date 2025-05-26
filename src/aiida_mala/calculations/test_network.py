@@ -32,12 +32,12 @@ class TestNetworkCalculation(CalcJob):
         spec.input("observables", valid_type=orm.List, help="List of observables to test.")
 
         # set default values for AiiDA options
-        spec.inputs["metadata"]["options"]["resources"].default = {
+        spec.inputs["metadata"]["options"]["resources"].default = {  # type: ignore
             "num_machines": 1,
             "num_mpiprocs_per_machine": 1,
         }
 
-        spec.inputs["metadata"]["options"]["parser_name"].default = "mala.test_network"
+        spec.inputs["metadata"]["options"]["parser_name"].default = "mala.test_network"  # type: ignore
 
         spec.output("observables", valid_type=orm.Dict, help="Dictionary of the observables.")
 
@@ -57,30 +57,51 @@ class TestNetworkCalculation(CalcJob):
         """
 
         arguments = [
-            self.inputs.te_snapshots,
-            self.inputs.observables.get_list(),
-            self.inputs.model.filename,
+            self.inputs.te_snapshots,  # type: ignore
+            self.inputs.observables.get_list(),  # type: ignore
+            self.inputs.model.filename,  # type: ignore
         ]
         local_copy_list = []
 
         input_file_content = self._generate_input_file(*arguments)
-        with folder.open(self.metadata.options.input_filename, "w") as handle:
+        with folder.open(self.metadata.options.input_filename, "w") as handle:  # type: ignore
             handle.write(input_file_content)
 
         codeinfo = datastructures.CodeInfo()
-        # codeinfo.cmdline_params = self.inputs.parameters.cmdline_params(
-        #     input_file=self.inputs.input_file.filename
-        # )
-        codeinfo.cmdline_params = [self.metadata.options.input_filename]
+        codeinfo.cmdline_params = [self.metadata.options.input_filename]  # type: ignore
 
-        codeinfo.code_uuid = self.inputs.code.uuid
+        codeinfo.code_uuid = self.inputs.code.uuid  # type: ignore
 
         local_copy_list = []
-        local_copy_list.append((self.inputs.model.uuid, self.inputs.model.filename, self.inputs.model.filename))
-        for snapshot in self.inputs.te_snapshots.get_list():
-            local_copy_list.append((self.inputs.input_data.uuid, f"{snapshot}.in.npy", f"{snapshot}.in.npy"))
-            local_copy_list.append((self.inputs.output_data.uuid, f"{snapshot}.out.npy", f"{snapshot}.out.npy"))
-            local_copy_list.append((self.inputs.output_data.uuid, f"{snapshot}.info.json", f"{snapshot}.info.json"))
+        local_copy_list.append(
+            (
+                self.inputs.model.uuid,  # type: ignore
+                self.inputs.model.filename,  # type: ignore
+                self.inputs.model.filename,
+            )
+        )  # type: ignore
+        for snapshot in self.inputs.te_snapshots.get_list():  # type: ignore
+            local_copy_list.append(
+                (
+                    self.inputs.input_data.uuid,  # type: ignore
+                    f"{snapshot}.in.npy",
+                    f"{snapshot}.in.npy",
+                )
+            )
+            local_copy_list.append(
+                (
+                    self.inputs.output_data.uuid,  # type: ignore
+                    f"{snapshot}.out.npy",
+                    f"{snapshot}.out.npy",
+                )
+            )
+            local_copy_list.append(
+                (
+                    self.inputs.output_data.uuid,  # type: ignore
+                    f"{snapshot}.info.json",
+                    f"{snapshot}.info.json",
+                )
+            )
 
         # Prepare a `CalcInfo` to be returned to the engine
         calcinfo = datastructures.CalcInfo()

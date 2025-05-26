@@ -41,7 +41,7 @@ docs = [
 Source = "https://github.com/pcagas/aiida-mala"
 
 [project.entry-points."aiida.data"]
-"mala.train_network" = "aiida_mala.data:TrainNetworkParameters"
+"mala.train_network" = "aiida_mala.data.train_network:TrainNetworkParameters"
 
 [project.entry-points."aiida.calculations"]
 "mala.test_network" = "aiida_mala.calculations.test_network:TestNetworkCalculation"
