@@ -113,7 +113,7 @@ class TrainNetworkCalculation(CalcJob):
         calcinfo = datastructures.CalcInfo()
         calcinfo.codes_info = [codeinfo]
         calcinfo.local_copy_list = local_copy_list
-        calcinfo.retrieve_list = ["Be_model.zip"]
+        calcinfo.retrieve_list = ["model.zip"]
 
         return calcinfo
 
@@ -151,6 +151,6 @@ class TrainNetworkCalculation(CalcJob):
 
         input_file += "test_trainer = mala.Trainer(parameters, test_network, data_handler)\n"
         input_file += "test_trainer.train_network()\n"
-        input_file += "test_trainer.save_run('Be_model')\n"
+        input_file += "test_trainer.save_run('model')\n"
 
         return input_file

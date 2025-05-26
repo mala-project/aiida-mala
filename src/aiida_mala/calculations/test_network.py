@@ -77,7 +77,7 @@ class TestNetworkCalculation(CalcJob):
             (
                 self.inputs.model.uuid,  # type: ignore
                 self.inputs.model.filename,  # type: ignore
-                self.inputs.model.filename,
+                self.inputs.model.filename,  # type: ignore
             )
         )  # type: ignore
         for snapshot in self.inputs.te_snapshots.get_list():  # type: ignore
